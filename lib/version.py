@@ -3,6 +3,7 @@ Version management module - Handles Kubernetes version validation and upgrade pa
 """
 import logging
 import re
+import urllib.request
 from typing import List, Tuple, Optional
 
 logger = logging.getLogger(__name__)
@@ -129,6 +130,20 @@ def calculate_upgrade_path(current: Version, target: Version) -> List[Version]:
     return path
 
 
+def get_latest_stable_version() -> Optional[Version]:
+    """
+    Fetch the latest stable Kubernetes version from official source
+    Returns None if unable to fetch
+    """
+    try:
+        with urllib.request.urlopen('https://dl.k8s.io/release/stable.txt', timeout=5) as response:
+            version_str = response.read().decode('utf-8').strip()
+            return Version(version_str)
+    except Exception as e:
+        logger.warning(f"Failed to fetch latest Kubernetes version: {e}")
+        return None
+
+
 def validate_version_string(version: str) -> Tuple[bool, str]:
     """
     Validate a version string format
@@ -144,8 +159,14 @@ def validate_version_string(version: str) -> Tuple[bool, str]:
         if v.minor < 20:
             return False, f"Kubernetes {v} is too old (minimum supported: 1.20)"
         
-        if v.minor > 31:
-            return False, f"Kubernetes {v} is not yet released or supported"
+        # Check against latest stable release
+        latest = get_latest_stable_version()
+        if latest and v.minor > latest.minor:
+            return False, f"Kubernetes {v} is not yet released or supported (latest stable: {latest})"
+        
+        # Fallback: allow up to 5 versions ahead of latest known if fetch failed
+        if not latest and v.minor > 35:
+            return False, f"Kubernetes {v} appears to be unreleased (unable to verify against latest stable)"
         
         return True, f"Version {v} is valid"
         
