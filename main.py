@@ -76,6 +76,9 @@ def configure(settings: kopf.OperatorSettings, **_):
         settings.peering.name = os.getenv('OPERATOR_NAME', 'cupcake')
         settings.peering.lifetime = 60
     
+    # Set operator identity explicitly to avoid getpass.getuser() issues in containers
+    settings.peering.identity = os.getenv('OPERATOR_IDENTITY', 'cupcake-operator')
+    
     # Configure watching
     settings.watching.server_timeout = 600
     settings.watching.client_timeout = 660
