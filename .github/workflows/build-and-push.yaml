@@ -5,7 +5,7 @@ on:
     branches:
       - main
     tags:
-      - 'v*'
+      - "v*"
   pull_request:
     branches:
       - main
@@ -67,6 +67,17 @@ jobs:
             COMMIT=${{ github.sha }}
             BUILD_DATE=${{ github.event.head_commit.timestamp }}
 
+      - name: Scan image for vulnerabilities with Trivy
+        uses: aquasecurity/trivy-action@v0.14.0
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.OPERATOR_IMAGE_NAME }}:${{ github.ref_name }}
+          format: "table"
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: "os,library"
+        env:
+          TRIVY_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          TRIVY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
 
   create-release:
     name: Create GitHub Release
@@ -144,7 +155,6 @@ jobs:
         run: |
           echo "✅ All images built successfully!"
           echo "Operator: ${{ env.REGISTRY }}/${{ env.OPERATOR_IMAGE_NAME }}"
-         
 
       - name: Build Failed
         if: ${{ needs.build-operator.result == 'failure' || needs.build-agent.result == 'failure' }}
