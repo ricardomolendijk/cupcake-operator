@@ -110,4 +110,4 @@ logger.info("CUPCAKE operator starting...")
 
 
 if __name__ == '__main__':
-    kopf.run()
+    kopf.run(identity=os.getenv('OPERATOR_IDENTITY', 'cupcake-operator'))
