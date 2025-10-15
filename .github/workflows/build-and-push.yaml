@@ -68,7 +68,7 @@ jobs:
             BUILD_DATE=${{ github.event.head_commit.timestamp }}
 
       - name: Scan image for vulnerabilities with Trivy
-        uses: aquasecurity/trivy-action@v0.14.0
+        uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.OPERATOR_IMAGE_NAME }}:${{ github.ref_name }}
           format: "table"
